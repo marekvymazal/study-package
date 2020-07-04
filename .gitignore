@@ -1,0 +1,6 @@
+/packages/*
+!/packages/demo/
+node_modules/
+
+public/packages.json
+public/packages/
