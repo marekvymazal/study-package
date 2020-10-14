@@ -3,6 +3,14 @@ var question_index = 0;
 var correctCnt = 0;
 var wrongCnt = 0;
 
+function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
 async function loadPackages() {
     try {
         let res = await fetch('packages.json');
@@ -34,6 +42,9 @@ async function loadPackage( label ) {
     // load package json file
     package_data = await loadPackageJSON( label );
     question_index = 0;
+
+    // shuffle questions
+    package_data.questions = shuffle(package_data.questions)
 
     // start quizzer
     doQuestion();
@@ -115,8 +126,43 @@ function doQuestion() {
     let inputDiv = document.getElementById('input');
     inputDiv.innerHTML = '';
 
-    let textArea = document.createElement('textarea');
-    inputDiv.appendChild(textArea);
+    if (q_data.input === 'text') {
+        let textArea = document.createElement('textarea');
+        inputDiv.appendChild(textArea);
+    } else if (q_data.input === 'choice') {
+        // multiple choice ( one selection / radio )
+        // copy options, shuffle
+        let answerIndexes = []
+        for (let index = 0; index < q_data.options.length; index++) {
+            answerIndexes.push( index )
+        }
+        answerIndex = shuffle(answerIndexes)
+
+        for (let index in answerIndex) {
+
+            let sectionDiv = document.createElement('div')
+            sectionDiv.className = 'input-section'
+
+            let answer = q_data.options[answerIndex[index]]
+
+            let answerDiv = document.createElement('input')
+            answerDiv.type = 'radio'
+            answerDiv.value = answerIndex[index]
+            answerDiv.id = answerIndex[index]
+            answerDiv.name = 'answer'
+
+            if (index === '0') answerDiv.checked = true
+
+            let labelDiv = document.createElement('label')
+            labelDiv.htmlFor = index
+            labelDiv.innerText = answer
+
+            sectionDiv.appendChild(answerDiv)
+            sectionDiv.appendChild(labelDiv)
+
+            inputDiv.appendChild(sectionDiv)
+        }
+    }
 
     // setup next
     let nextButton = document.createElement('button');
@@ -131,36 +177,79 @@ function doQuestion() {
         answerLabel.innerHTML = 'Answer';
         answerDiv.appendChild(answerLabel);
 
-        // show answer
-        let answerDisplay = document.createElement('div');
-        answerDisplay.innerHTML = q_data.answer;
-        answerDiv.appendChild(answerDisplay);
-
         // prompt
-        let promptDiv = document.createElement('div');
-        promptDiv.innerHTML = "Where you correct?";
-        answerDiv.appendChild(promptDiv);
+        if (q_data.input === 'text') {
 
-        // show correct / incorrect buttons
-        let correctBtn = document.createElement('button');
-        let wrongBtn = document.createElement('button');
+            // show answer
+            let answerDisplay = document.createElement('div');
+            answerDisplay.innerHTML = q_data.answer;
+            answerDiv.appendChild(answerDisplay);
 
-        correctBtn.innerHTML = 'Yes';
-        wrongBtn.innerHTML = 'No';
+            let promptDiv = document.createElement('div');
+            promptDiv.innerHTML = "Where you correct?";
+            answerDiv.appendChild(promptDiv);
 
-        answerDiv.appendChild(correctBtn);
-        answerDiv.appendChild(wrongBtn);
+            // show correct / incorrect buttons
+            let correctBtn = document.createElement('button');
+            let wrongBtn = document.createElement('button');
 
-        correctBtn.onclick = () => {
-            correctCnt += 1;
-            question_index += 1;
-            doQuestion();
+            correctBtn.innerHTML = 'Yes';
+            wrongBtn.innerHTML = 'No';
+
+            answerDiv.appendChild(correctBtn);
+            answerDiv.appendChild(wrongBtn);
+
+            correctBtn.onclick = () => {
+                correctCnt += 1;
+                question_index += 1;
+                doQuestion();
+            }
+
+            wrongBtn.onclick = () => {
+                wrongCnt += 1;
+                question_index += 1;
+                doQuestion();
+            }
         }
+        else if (q_data.input === 'choice') {
+            // get radio button option
+            // show answer
+            let answerDisplay = document.createElement('div');
+            answerDisplay.innerHTML = q_data.options[0];
+            answerDiv.appendChild(answerDisplay);
 
-        wrongBtn.onclick = () => {
-            wrongCnt += 1;
-            question_index += 1;
-            doQuestion();
+            //var answers = document.getElementsByName('answer'); 
+            // for(i = 0; i < answers.length; i++) { 
+            //     if(answers[i].checked) {
+            //         if (answers[i].id == )
+            //     }
+            // }
+            var selectedAnswer = document.getElementById('0')
+            var correct = false
+            if (selectedAnswer.checked) {
+                correct = true
+                correctCnt += 1
+            } else {
+                wrongCnt += 1
+            }
+
+            let resultDisplay = document.createElement('div');
+            if (correct) {
+                resultDisplay.innerHTML = "You are correct!"
+            } else {
+                resultDisplay.innerHTML = "You are wrong"
+            }
+            answerDiv.appendChild(resultDisplay);
+
+            // next buttons
+            let nextBtn = document.createElement('button');
+            nextBtn.innerHTML = 'Next';
+            answerDiv.appendChild(nextBtn);
+
+            nextBtn.onclick = () => {
+                question_index += 1;
+                doQuestion();
+            }
         }
     };
 }
