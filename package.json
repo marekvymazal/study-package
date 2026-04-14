@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "gulp & http-server ./public",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "gulp & http-server ./public"
   },
   "author": "",
   "license": "ISC",
@@ -12,6 +11,6 @@
     "http-server": "^14.1.0"
   },
   "devDependencies": {
-    "gulp": "^4.0.2"
+    "gulp": "^5.0.1"
   }
 }
